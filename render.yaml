@@ -1,0 +1,37 @@
+# QuizForge AI — Render Blueprint
+# Deploy the whole app (backend + frontend) with ONE click:
+#   1. Push this repo to GitHub
+#   2. Render -> New -> Blueprint -> connect the repo -> Apply
+# Free tier works for both services.
+
+services:
+  # ── Backend: FastAPI (Python) ────────────────────────────────
+  - type: web
+    name: quizforge-api
+    env: docker
+    rootDir: backend
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite:///./quizforge.db
+      - key: GROQ_API_KEY
+        sync: false # set later in the dashboard if you use Groq LLM mode
+
+  # ── Frontend: React (Vite static build) ──────────────────────
+  - type: web
+    name: quizforge
+    env: static
+    rootDir: frontend
+    plan: free
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      # Auto-wires the backend URL (+ /api is appended at runtime by api.ts)
+      - key: VITE_API_BASE
+        fromService:
+          name: quizforge-api
+          type: web
+          property: url

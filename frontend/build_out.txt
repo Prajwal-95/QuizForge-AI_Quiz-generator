@@ -1,0 +1,28 @@
+
+> quizforge-frontend@0.1.0 build
+> tsc -b && vite build
+
+[36mvite v8.2.2 [32mbuilding client environment for production...[36m[39m
+transforming...
+G£ô 2813 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.38 kB Göé gzip:   0.76 kB
+dist/assets/index-DxhU46X7.css     80.68 kB Göé gzip:  14.50 kB
+dist/assets/index-wi_aB2k0.js   1,377.95 kB Göé gzip: 390.12 kB
+
+[32mG£ô built in 1.62s[39m
+node.exe : [33m[plugin builtin:vite-reporter] 
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([33m[plugin builtin:vite-reporter] :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: 
+https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+
+EXIT:0
