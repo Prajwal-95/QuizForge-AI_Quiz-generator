@@ -22,6 +22,13 @@ export function LoginModal({ user, onSignIn, onSignOut, onClose }: LoginModalPro
   const [field, setField] = useState<"none" | "username" | "password">("none");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [authError, setAuthError] = useState("");
+  const submitBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (mode !== "register") return;
+    const t = setTimeout(() => submitBtnRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }), 60);
+    return () => clearTimeout(t);
+  }, [mode]);
 
   function resetForm() {
     setName("");
@@ -180,7 +187,7 @@ export function LoginModal({ user, onSignIn, onSignOut, onClose }: LoginModalPro
 
               {authError && <div className="auth-error">{authError}</div>}
 
-              <motion.button className="btn-3d btn-primary btn-lg btn-full" type="submit" disabled={status === "loading"} whileTap={{ scale: 0.97 }}>
+              <motion.button ref={submitBtnRef} className="btn-3d btn-auth-submit btn-lg btn-full" type="submit" disabled={status === "loading"} whileTap={{ scale: 0.97 }}>
                 {status === "loading" ? <Loader2 size={15} className="spin" /> : null}
                 {status === "loading" ? "Working…" : mode === "login" ? "Sign in" : "Create account"}
               </motion.button>

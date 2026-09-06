@@ -309,6 +309,14 @@ select{appearance:none;background-image:linear-gradient(45deg, transparent 50%, 
 .signing-done{color:var(--accent);font-weight:700}
 .login-body .login-char{z-index:0;position:relative}
 .login-body .login-char:before{content:"";opacity:.55;filter:blur(6px);z-index:-1;pointer-events:none;background:radial-gradient(#04630780 0%,#03070500 70%);width:70%;height:38px;position:absolute;top:68%;left:50%;transform:translate(-50%,-50%)}
+/* Auth submit button: plain, no color wash, readable letters on top */
+.btn-auth-submit{color:var(--text);background:rgba(255,255,255,0.08);border:1px solid var(--border-strong);box-shadow:0 3px 0 rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12)}
+.btn-auth-submit>*{z-index:2;position:relative}
+.btn-auth-submit:hover{background:rgba(255,255,255,0.14);border-color:color-mix(in srgb, var(--brand-bright) 55%, var(--border-strong));color:var(--text)}
+.btn-auth-submit:active{box-shadow:inset 0 2px 6px rgba(0,0,0,0.22);transform:translateY(1px)}
+.btn-auth-submit:disabled{opacity:.55;cursor:not-allowed}
+
+
 @media (width<=1100px){.metrics-grid,.about-grid,.help-steps{grid-template-columns:repeat(2,minmax(0,1fr))}
 .pipeline-row{grid-template-columns:repeat(2,1fr)}
 }
@@ -679,9 +687,10 @@ select,textarea{background:color-mix(in srgb, var(--surface) 52%, transparent);-
 .quiz-card .chip.ok{color:var(--accent);background:color-mix(in srgb, var(--accent) 12%, transparent);border-color:color-mix(in srgb, var(--accent) 28%, var(--glass-border))}
 .quiz-card-title,.quiz-card-top,.quiz-card-meta,.quiz-card-actions{z-index:1;position:relative}
 .dashboard-empty{border-radius:var(--radius-lg);border:1px dashed color-mix(in srgb, var(--brand) 30%, var(--glass-border));background:color-mix(in srgb, var(--glass) 55%, transparent);-webkit-backdrop-filter:blur(10px)}
-.login-modal{border-radius:var(--radius-lg);border:1px solid var(--glass-border);background:linear-gradient(180deg, var(--glass-strong), color-mix(in srgb, var(--glass) 55%, var(--surface) 45%));-webkit-backdrop-filter:blur(28px);box-shadow:var(--shadow-3), var(--inset-hi);overflow:hidden}
-.auth-tab{border-radius:var(--radius);transition:background .16s,color .16s,box-shadow .16s}
-.auth-tab.active{box-shadow:var(--inset-hi);color:var(--brand);background:linear-gradient(135deg,#0463072E,#0D94881F)}
+.login-modal{border-radius:var(--radius-lg);border:1px solid var(--glass-border);background:linear-gradient(180deg, var(--glass-strong), color-mix(in srgb, var(--glass) 55%, var(--surface) 45%));-webkit-backdrop-filter:blur(28px);box-shadow:var(--shadow-3), var(--inset-hi);overflow-y:auto;overflow-x:hidden}
+.auth-tab{border-radius:var(--radius);color:var(--muted);transition:background .16s,color .16s,box-shadow .16s}
+.auth-tab:hover{color:var(--text)}
+.auth-tab.active{box-shadow:var(--inset-hi);color:var(--text);background:rgba(255,255,255,0.07)}
 .input-field input,.input-field select{background:color-mix(in srgb, var(--surface) 52%, transparent);border:1px solid var(--glass-border);box-shadow:var(--inset-hi)}
 .share-modal{border-radius:var(--radius-lg);border:1px solid var(--glass-border);background:linear-gradient(180deg, var(--glass-strong), color-mix(in srgb, var(--glass) 55%, var(--surface) 45%));-webkit-backdrop-filter:blur(28px);box-shadow:var(--shadow-3), var(--inset-hi)}
 .share-code{border:1px solid var(--glass-border);background:color-mix(in srgb, var(--surface) 50%, transparent);box-shadow:var(--inset-hi)}
@@ -764,6 +773,7 @@ to{transform:translate(2%,1%)scale(1.02)}
 .btn-3d.btn-danger,.button.danger{background:rgba(15, 118, 110, 0.22);backdrop-filter:blur(18px) saturate(1.5);color:#f0fdf4;box-shadow:0 3px 0 rgba(15, 118, 110, 0.4), inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -8px 16px -8px rgba(0,0,0,0.18), 0 10px 22px -8px rgba(15, 118, 110, 0.42);border:1px solid rgba(15,118,110,0.34);border-top-color:rgba(255,255,255,0.16)}
 .btn-3d.btn-danger:hover,.button.danger:hover{background:rgba(15, 118, 110, 0.34);border-color:rgba(15,118,110,0.52);box-shadow:0 5px 0 rgba(15, 118, 110, 0.44), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -10px 18px -8px rgba(0,0,0,0.18), 0 18px 40px -10px rgba(15, 118, 110, 0.52), 0 0 26px -4px rgba(15,118,110,0.34);transform:translateY(-2px)}
 .btn-3d.btn-danger:active,.button.danger:active{background:rgba(15, 118, 110, 0.18);box-shadow:inset 0 2px 6px rgba(0,0,0,0.25), 0 1px 0 rgba(15, 118, 110, 0.3), 0 4px 12px -6px rgba(15, 118, 110, 0.35);transform:translateY(2px)}
+.login-modal .btn-auth-submit:after{display:none}
 .btn-sm,.button.small{border-radius:10px;padding:7px 14px;font-size:13px}
 .btn-md,.button:not(.small):not(.big){padding:11px 20px;font-size:14px}
 .btn-lg{border-radius:16px;padding:15px 28px;font-size:16px}
