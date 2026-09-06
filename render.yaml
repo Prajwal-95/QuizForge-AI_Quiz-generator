@@ -5,11 +5,12 @@
 # Free tier works for both services.
 
 services:
-  # ── Backend: FastAPI (Python) ────────────────────────────────
+  # ── Backend: FastAPI (Python, Docker) ────────────────────────
   - type: web
     name: quizforge-api
-    env: docker
+    runtime: docker
     rootDir: backend
+    dockerfilePath: ./Dockerfile
     plan: free
     healthCheckPath: /api/health
     envVars:
@@ -20,10 +21,10 @@ services:
       - key: GROQ_API_KEY
         sync: false # set later in the dashboard if you use Groq LLM mode
 
-  # ── Frontend: React (Vite static build) ──────────────────────
+  # ── Frontend: React (Vite static build, served on Render's CDN) ──
   - type: web
     name: quizforge
-    env: static
+    runtime: static
     rootDir: frontend
     plan: free
     buildCommand: npm install && npm run build
