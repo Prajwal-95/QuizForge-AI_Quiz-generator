@@ -21,14 +21,17 @@ services:
       - key: GROQ_API_KEY
         sync: false # set later in the dashboard if you use Groq LLM mode
 
-  # ── Frontend: React (Vite static build, served on Render's CDN) ──
-  - type: static
+  # ── Frontend: React (Vite build + nginx, Docker) ─────────────
+  - type: web
     name: quizforge
+    runtime: docker
     rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    dockerfilePath: ./Dockerfile
+    plan: free
     envVars:
-      # Auto-wires the backend URL (+ /api is appended at runtime by api.ts)
+      # Injected at Docker build time via ARG in the Dockerfile.
+      # Render resolves this from the backend service's public hostname,
+      # then api.ts auto-adds /api at runtime.
       - key: VITE_API_BASE
         fromService:
           name: quizforge-api
