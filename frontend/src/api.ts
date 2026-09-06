@@ -30,8 +30,13 @@ function resolveApiBase(): string {
   //    "https://host/api" or just "https://host" (the /api suffix is auto-added).
   const deployBase = import.meta.env.VITE_API_BASE as string | undefined;
   if (deployBase) {
-    const clean = deployBase.replace(/\/+$/, "");
-    return clean.endsWith("/api") ? clean : `${clean}/api`;
+    // Render's fromService/host gives a bare hostname (e.g. "quizforge-api.onrender.com").
+    // Prepend https:// if no protocol is present so fetch() works correctly.
+    let base = deployBase.replace(/\/+$/, "");
+    if (!/^https?:\/\//i.test(base)) {
+      base = `https://${base}`;
+    }
+    return base.endsWith("/api") ? base : `${base}/api`;
   }
 
   const hostname =
