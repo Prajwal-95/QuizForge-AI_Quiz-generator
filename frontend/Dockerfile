@@ -4,9 +4,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
-# VITE_API_BASE is injected at build time (Render/Railway) so the built
-# bundle knows where the FastAPI backend lives. Defaults to "/api" for
-# single-origin deployments handled by the nginx proxy.
+# VITE_API_BASE is injected at build time (Render auto-translates service
+# env vars into Docker build args) so the built bundle knows where the
+# FastAPI backend lives. Defaults to "/api" for local/single-origin setups.
 ARG VITE_API_BASE=/api
 ENV VITE_API_BASE=${VITE_API_BASE}
 RUN npm run build
@@ -15,6 +15,9 @@ RUN npm run build
 FROM nginx:1.27-alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 # Custom config handles client-side routing (BrowserRouter) + API proxy.
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Use envsubst so the ${PORT} variable in nginx.conf is resolved at runtime.
+RUN apk add --no-cache gettext
+COPY nginx.conf /etc/nginx/conf.d/default.conf.template
+# Render routes to the PORT env var (default 10000). EXPOSE is informational.
+EXPOSE 10000
+CMD ["/bin/sh", "-c", "envsubst '${PORT}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
