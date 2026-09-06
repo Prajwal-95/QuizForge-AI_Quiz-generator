@@ -19,5 +19,7 @@ COPY --from=build /app/dist /usr/share/nginx/html
 RUN apk add --no-cache gettext
 COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 # Render routes to the PORT env var (default 10000). EXPOSE is informational.
+# Default PORT to 10000 at startup so envsubst never emits an empty "listen"
+# line (which would crash nginx) if the env var is missing for any reason.
 EXPOSE 10000
-CMD ["/bin/sh", "-c", "envsubst '${PORT}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "export PORT=${PORT:-10000}; envsubst '${PORT}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
