@@ -164,6 +164,54 @@ persist SQLite.
 
 ---
 
+## Keeping the free backend awake (recommended)
+
+Render's free tier spins the `quizforge-api` service down after ~15 minutes of
+idle. The first request after a cold start returns **HTTP 503 for 30–50s**,
+which shows up in the app as **"Failed to fetch"** on sign-in and a **"Demo
+mode"** badge while the health check fails. (The backend itself is fine — it
+just needs to be woken up.)
+
+The reliable fix is an **externally-hosted uptime monitor** that hits the
+backend every few minutes so it never idles out. The backend health endpoint is
+cheap and CORS is open, so this is safe:
+
+> Monitor target: `https://quizforge-api-ntm4.onrender.com/api/health`
+
+### Option 1 — UptimeRobot (recommended, free, 50 monitors)
+
+1. Create a free account at https://uptimerobot.com
+2. **Add New Monitor** → type **HTTP(s)**.
+3. **URL (or IP)**: `https://quizforge-api-ntm4.onrender.com/api/health`
+4. **Monitoring interval**: `5 minutes` (free-tier minimum).
+5. Leave **HTTP method** as GET and **(Optional) alert contacts** empty for now.
+6. **Create monitor**.
+
+UptimeRobot pings every 5 min, so the service never drops below Render's
+~15-min idle threshold. Downtime alerts are expected during things like manual
+redeploys — you can silence these by wrapping the periodic pings in a
+**Maintenance Window** (UptimeRobot → Modify → Maintenance window → Daily) so
+alerts don't spam you.
+
+> The same monitor on the **frontend** URL
+> (`https://quizforge-jybu.onrender.com`) keeps the static app warm too, though a
+> static nginx site doesn't cold-start the same way.
+
+### Option 2 — cron-job.org (free, no alerts by default)
+
+1. Create a free account at https://cron-job.org
+2. **Create cronjob** → name it `QuizForge keep-alive`.
+3. **URL**: `https://quizforge-api-ntm4.onrender.com/api/health`
+4. **Schedule**: every 5 minutes (e.g. `*/5 * * * *`).
+5. Save. It pings on schedule so the backend stays awake.
+
+> **Note:** Render free instances can still restart on deploys or platform
+> maintenance; a pinger keeps them warm but isn't a 100% uptime guarantee. For
+> guaranteed-always-on, upgrade the backend service to Render **Starter**
+> ($7/mo) — the frontend static site is effectively free either way.
+
+---
+
 ## Verify a deployment
 
 - Open the deployed frontend URL → the login/dashboard should load.
