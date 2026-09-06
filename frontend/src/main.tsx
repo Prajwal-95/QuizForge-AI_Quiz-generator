@@ -68,7 +68,15 @@ function AppShell() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    checkHealth().then(setLive).catch(() => setLive(false));
+    // Render's free tier cold-starts ~30-50s, so the first health check can
+    // fail while the backend wakes up. Re-check on an interval so a transient
+    // 503 on load doesn't permanently lock the UI into "Demo mode" — once the
+    // backend is warm, `live` flips to true on its own.
+    let cancelled = false;
+    const probe = () => checkHealth().then((ok) => { if (!cancelled) setLive(ok); });
+    probe();
+    const id = window.setInterval(probe, 30_000);
+    return () => { cancelled = true; window.clearInterval(id); };
   }, []);
 
   useEffect(() => {
