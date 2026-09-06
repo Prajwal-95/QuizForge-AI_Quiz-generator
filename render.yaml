@@ -22,11 +22,9 @@ services:
         sync: false # set later in the dashboard if you use Groq LLM mode
 
   # ── Frontend: React (Vite static build, served on Render's CDN) ──
-  - type: web
+  - type: static
     name: quizforge
-    runtime: static
     rootDir: frontend
-    plan: free
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     envVars:
