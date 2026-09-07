@@ -277,22 +277,31 @@ export async function checkHealth(): Promise<boolean> {
 }
 
 /**
- * Provider status from `/health/runtime`.
+ * Provider status probe.
  *
  *   { provider: "groq", live: true }  → real LLM generation is configured
  *   { provider: "demo", live: false } → no GROQ_API_KEY → demo question bank
- *   null                              → backend unreachable OR stale backend
- *                                       (old deploy without the /runtime route)
+ *   null                              → backend unreachable
+ *
+ * The FastAPI health router is mounted at `/api`, so the provider endpoint is
+ * served at `${API}/runtime` (e.g. `/api/runtime`). Some earlier deploys /
+ * docs advertised `/api/health/runtime` instead, so fall back to that path if
+ * the primary one 404s — this covers both backend shapes without a redeploy.
  */
 export async function getRuntime(): Promise<{ provider: string; live: boolean } | null> {
-  try {
-    const r = await fetch(`${API}/health/runtime`);
-    if (!r.ok) return null;
-    const d = await r.json();
-    return d && typeof d.live === "boolean" ? { provider: d.provider ?? "demo", live: d.live } : null;
-  } catch {
-    return null;
+  for (const path of ["/runtime", "/health/runtime"]) {
+    try {
+      const r = await fetch(`${API}${path}`);
+      if (!r.ok) continue; // 404 → try the alias path
+      const d = await r.json();
+      if (d && typeof d.live === "boolean") {
+        return { provider: d.provider ?? "demo", live: d.live };
+      }
+    } catch {
+      // backend unreachable → try next path, then give up
+    }
   }
+  return null;
 }
 
 export async function shareUrl(shareCode: string): Promise<string> {

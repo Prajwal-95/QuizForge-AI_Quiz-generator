@@ -59,7 +59,7 @@ To go live:
 2. In the Render dashboard → `quizforge-api` service → **Environment**, add:
    - `GROQ_API_KEY` = your key
 3. **Save Changes** (Render redeploys automatically), then verify:
-   `GET https://quizforge-api-ntm4.onrender.com/api/health/runtime`
+   `GET https://quizforge-api-ntm4.onrender.com/api/runtime`
    → expect `{"provider":"groq","live":true}`.
 4. In the app, the sidebar badge flips from **Demo mode** → **Connected** and the
    Dashboard pipeline shows **All systems online**. Quizzes you generate are now
@@ -237,7 +237,7 @@ alerts don't spam you.
 
 - Open the deployed frontend URL → the login/dashboard should load.
 - Open `https://<backend-url>/api/health` → expect `{"status": "ok", ...}`.
-- Open `https://<backend-url>/api/health/runtime` →
+- Open `https://<backend-url>/api/runtime` →
   `{"provider":"groq","live":true}` means the app is **LIVE**;
   `{"provider":"demo","live":false}` means Demo Mode (no `GROQ_API_KEY` yet).
 - Register a user and create a quiz to confirm the frontend ↔ backend link

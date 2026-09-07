@@ -159,7 +159,7 @@ All endpoints are prefixed with `/api`. See `/docs` for the interactive Swagger 
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/health` | Service liveness check |
-| GET | `/health/runtime` | Runtime / environment details |
+| GET | `/runtime` | Runtime / environment details (`provider` + `live` flag) |
 
 ### Auth (`/api/auth`)
 | Method | Path | Description |
