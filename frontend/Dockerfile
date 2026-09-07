@@ -32,4 +32,4 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 # line (which would crash nginx) if the env var is missing for any reason.
 # API_BACKEND is set at runtime from the backend's RENDER_EXTERNAL_HOSTNAME.
 EXPOSE 10000
-CMD ["/bin/sh", "-c", "export PORT=${PORT:-10000}; export API_BACKEND=${API_BACKEND:-localhost}; envsubst '${PORT} ${API_BACKEND}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "export PORT=${PORT:-10000}; export API_BACKEND=${API_BACKEND:-quizforge-api-ntm4.onrender.com}; envsubst '${PORT} ${API_BACKEND}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
