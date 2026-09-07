@@ -26,11 +26,11 @@ import {
 
 /* â”€â”€ Pipeline status (dashboard) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-function Pipeline({ live }: { live: boolean }) {
+function Pipeline({ live, online }: { live: boolean; online: boolean }) {
   const items = [
     { label: "Source material", value: "Ready" },
-    { label: "AI generator", value: live ? "Online" : "Demo" },
-    { label: "Validation", value: live ? "Strict" : "Simulated" },
+    { label: "AI generator", value: !online ? "Offline" : live ? "Online" : "Demo" },
+    { label: "Validation", value: !online ? "Paused" : live ? "Strict" : "Simulated" },
     { label: "Answer keys", value: "Exact match" },
   ];
   return (
@@ -101,6 +101,7 @@ function KnowledgeChain() {
 export function Dashboard({
   metrics,
   live,
+  online,
   dark,
   user,
   onCreateQuiz,
@@ -112,6 +113,7 @@ export function Dashboard({
 }: {
   metrics: Metrics;
   live: boolean;
+  online: boolean;
   dark: boolean;
   user: SessionUser;
   onCreateQuiz: () => void;
@@ -147,8 +149,8 @@ export function Dashboard({
   ];
   const items = [
     { label: "Source material", value: "Ready" },
-    { label: "AI generator", value: live ? "Online" : "Demo" },
-    { label: "Validation", value: live ? "Strict" : "Simulated" },
+    { label: "AI generator", value: !online ? "Offline" : live ? "Online" : "Demo" },
+    { label: "Validation", value: !online ? "Paused" : live ? "Strict" : "Simulated" },
     { label: "Answer keys", value: "Exact match" },
   ];
 
@@ -308,7 +310,7 @@ export function Dashboard({
             <span className="insights-icon accent"><TrendingUp size={18} /></span>
             <div>
               <span className="metric-label">Pipeline status</span>
-              <span className="insights-value">{live ? "All systems online" : "Demo mode"}</span>
+              <span className="insights-value">{!online ? "Service offline" : live ? "All systems online" : "Demo mode"}</span>
               <span className="metric-detail">Extraction â†’ generation â†’ validation â†’ delivery.</span>
             </div>
           </div>

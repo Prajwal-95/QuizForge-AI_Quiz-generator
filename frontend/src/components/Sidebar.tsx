@@ -13,6 +13,13 @@ import {
   FolderOpen,
 } from "lucide-react";
 
+/** True when the app is served from a real host (e.g. Render), not localhost. */
+function isDeployedHost(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  return host !== "localhost" && host !== "127.0.0.1" && host !== "[::1]";
+}
+
 /* ── Brand mark — consistent "QuizForge AI" wordmark ────────── */
 
 export function BrandMark({ onClick, size = "md" }: { onClick?: () => void; size?: "sm" | "md" }) {
@@ -108,6 +115,7 @@ export function SidebarLinks({
 export function Sidebar({
   view,
   live,
+  online,
   user,
   onNavigate,
   onOpenSettings,
@@ -116,6 +124,7 @@ export function Sidebar({
 }: {
   view: View;
   live: boolean;
+  online: boolean;
   user: SessionUser;
   onNavigate: (view: View) => void;
   onOpenSettings: () => void;
@@ -156,8 +165,10 @@ export function Sidebar({
       </motion.div>
       <SidebarLinks view={view} onNavigate={onNavigate} onOpenSettings={onOpenSettings} onOpenAnalytics={onOpenAnalytics} />
       <motion.div className="sidebar-footer" layout>
-        <span className={live ? "signal live" : "signal"}><span /> {live ? "Connected" : "Demo mode"}</span>
-        <span className="version-text">local environment</span>
+        <span className={online && live ? "signal live" : "signal"}>
+          <span /> {!online ? "Offline" : live ? "Connected" : "Demo mode"}
+        </span>
+        <span className="version-text">{isDeployedHost() ? "deployed on Render" : "local environment"}</span>
       </motion.div>
     </motion.aside>
   );

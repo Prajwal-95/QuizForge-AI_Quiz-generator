@@ -276,6 +276,25 @@ export async function checkHealth(): Promise<boolean> {
   }
 }
 
+/**
+ * Provider status from `/health/runtime`.
+ *
+ *   { provider: "groq", live: true }  → real LLM generation is configured
+ *   { provider: "demo", live: false } → no GROQ_API_KEY → demo question bank
+ *   null                              → backend unreachable OR stale backend
+ *                                       (old deploy without the /runtime route)
+ */
+export async function getRuntime(): Promise<{ provider: string; live: boolean } | null> {
+  try {
+    const r = await fetch(`${API}/health/runtime`);
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d && typeof d.live === "boolean" ? { provider: d.provider ?? "demo", live: d.live } : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function shareUrl(shareCode: string): Promise<string> {
   // Use the origin the user is actually on (the deployed public URL, or
   // localhost when running locally) so students can open the link directly.

@@ -19,7 +19,11 @@ services:
       - key: DATABASE_URL
         value: sqlite:///./quizforge.db
       - key: GROQ_API_KEY
-        sync: false # set later in the dashboard if you use Groq LLM mode
+        # REQUIRED for live AI quizzes. Without a key the app stays in Demo Mode
+        # (curated local question bank) and the UI shows "Demo mode". Grab a free
+        # key at console.groq.com, then set it here in the dashboard:
+        #   quizforge-api -> Environment -> GROQ_API_KEY -> Save (auto-redeploys)
+        sync: false
 
   # ── Frontend: React (Vite build + nginx, Docker) ─────────────
   - type: web

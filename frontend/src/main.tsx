@@ -8,7 +8,7 @@ import "./styles.css";
 import "./premium.css";
 
 import type { Metrics, SessionUser, View } from "./types";
-import { checkHealth, clearSession, getMetrics, getStoredUser } from "./api";
+import { checkHealth, clearSession, getMetrics, getRuntime, getStoredUser } from "./api";
 
 import { Sidebar } from "./components/Sidebar";
 import { Topbar } from "./components/Topbar";
@@ -56,6 +56,7 @@ function CinematicParticles() {
 
 function AppShell() {
   const [live, setLive] = useState(true);
+  const [online, setOnline] = useState(true);
   const [dark, setDark] = useState(false);
   const [user, setUser] = useState<SessionUser>(getStoredUser);
   const [showingAuth, setShowingAuth] = useState(false);
@@ -68,12 +69,23 @@ function AppShell() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Render's free tier cold-starts ~30-50s, so the first health check can
-    // fail while the backend wakes up. Re-check on an interval so a transient
-    // 503 on load doesn't permanently lock the UI into "Demo mode" — once the
-    // backend is warm, `live` flips to true on its own.
+    // Two independent signals decide the status badge:
+    //  - online  → /health reachable (backend woke up, not cold-starting)
+    //  - live    → /health/runtime reports the Groq provider is configured.
+    // "Demo mode" only appears when the backend is UP but has no GROQ_API_KEY;
+    // a sleeping/cold-starting backend shows "Offline", and a live provider
+    // shows "Connected". Re-check on an interval so a transient 503 on load
+    // never permanently locks the UI into a stale status.
     let cancelled = false;
-    const probe = () => checkHealth().then((ok) => { if (!cancelled) setLive(ok); });
+    const probe = async () => {
+      const up = await checkHealth();
+      if (cancelled) return;
+      setOnline(up);
+      const rt = await getRuntime();
+      if (cancelled) return;
+      if (rt) setLive(rt.live);
+      else setLive(false); // stale backend (no /runtime) or demo provider
+    };
     probe();
     const id = window.setInterval(probe, 30_000);
     return () => { cancelled = true; window.clearInterval(id); };
@@ -122,6 +134,7 @@ function AppShell() {
             metrics={metrics}
             user={user}
             live={live}
+            online={online}
             dark={dark}
             onCreateQuiz={() => navigateTo("create")}
             onOpenBank={() => navigateTo("bank")}
@@ -318,6 +331,7 @@ function AppShell() {
       <Sidebar
         view={view}
         live={live}
+        online={online}
         user={user}
         onNavigate={navigateTo}
         onOpenSettings={() => setShowingAuth(true)}
