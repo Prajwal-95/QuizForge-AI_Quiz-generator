@@ -307,6 +307,12 @@ select{appearance:none;background-image:linear-gradient(45deg, transparent 50%, 
 .signing-spinner{border:2px solid var(--brand);vertical-align:-2px;border-top-color:#03070500;border-radius:50%;width:15px;height:15px;animation:.7s linear infinite spin;display:inline-block}
 .login-form .button.ghost.signing-in{color:var(--brand)}
 .signing-done{color:var(--accent);font-weight:700}
+/* ── Google sign-in ───────────────────────────────────────────────── */
+.google-auth{flex-direction:column;gap:10px;margin:2px 0 4px;display:flex}
+.google-btn-wrap{min-height:44px}
+.google-btn-wrap iframe{border-radius:var(--radius)!important}
+.google-divider{align-items:center;gap:10px;color:var(--muted);font-size:12px;font-weight:600;display:flex}
+.google-divider:before,.google-divider:after{background:var(--border);content:"";height:1px;flex:1}
 .login-body .login-char{z-index:0;position:relative}
 .login-body .login-char:before{content:"";opacity:.55;filter:blur(6px);z-index:-1;pointer-events:none;background:radial-gradient(#04630780 0%,#03070500 70%);width:70%;height:38px;position:absolute;top:68%;left:50%;transform:translate(-50%,-50%)}
 /* Auth submit button: plain, no color wash, readable letters on top */

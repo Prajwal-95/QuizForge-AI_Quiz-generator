@@ -14,6 +14,9 @@ COPY . .
 # FastAPI backend lives. Defaults to "/api" for local/single-origin setups.
 ARG VITE_API_BASE=/api
 ENV VITE_API_BASE=${VITE_API_BASE}
+# Google OAuth client ID, injected at build time. Empty by default (button hidden).
+ARG VITE_GOOGLE_CLIENT_ID=
+ENV VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
 RUN npm run build
 
 # ── Serve stage: static files behind nginx with SPA fallback ──

@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Loader2, LogOut, X } from "lucide-react";
 import { LoginCharacter } from "./LoginCharacter";
-import { login, register, setSession } from "../api";
+import { getGoogleClientId, isGoogleSignInEnabled, login, register, setSession, googleLogin } from "../api";
 import type { SessionUser } from "../types";
 
 type LoginModalProps = {
@@ -23,6 +23,63 @@ export function LoginModal({ user, onSignIn, onSignOut, onClose }: LoginModalPro
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [authError, setAuthError] = useState("");
   const submitBtnRef = useRef<HTMLButtonElement>(null);
+  const googleBtnRef = useRef<HTMLDivElement>(null);
+  const [googleBusy, setGoogleBusy] = useState(false);
+
+  // Google Identity Services only renders when a client ID is configured.
+  const googleOn = isGoogleSignInEnabled() && !user;
+
+  useEffect(() => {
+    if (!googleOn || !googleBtnRef.current) return;
+    const container = googleBtnRef.current;
+    let cancelled = false;
+
+    function renderGoogle(w: any) {
+      const gis = w?.google?.accounts?.id;
+      if (!gis || cancelled) return;
+      try {
+        gis.initialize({
+          client_id: getGoogleClientId(),
+          callback: async (resp: { credential?: string }) => {
+            if (!resp?.credential) return;
+            setGoogleBusy(true);
+            setAuthError("");
+            try {
+              const result = await googleLogin(resp.credential);
+              setSession(result.token, result.user);
+              setStatus("success");
+              setTimeout(() => onSignIn(result.user), 400);
+            } catch (err) {
+              setStatus("error");
+              setAuthError(err instanceof Error ? err.message : "Google sign-in failed.");
+            } finally {
+              setGoogleBusy(false);
+            }
+          },
+        });
+        gis.renderButton(container, { theme: "outline", size: "large", width: "100%", text: "continue_with", shape: "pill" });
+      } catch {
+        // GIS init/render failed; the email/password form still works.
+      }
+    }
+
+    const existing = document.getElementById("gsi-client");
+    if (existing) {
+      renderGoogle(window as any);
+    } else {
+      const script = document.createElement("script");
+      script.id = "gsi-client";
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      script.onload = () => renderGoogle(window as any);
+      document.body.appendChild(script);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [googleOn, onSignIn]);
+
 
   useEffect(() => {
     if (mode !== "register") return;
@@ -120,6 +177,14 @@ export function LoginModal({ user, onSignIn, onSignOut, onClose }: LoginModalPro
               <button className={mode === "login" ? "auth-tab active" : "auth-tab"} onClick={() => { setMode("login"); resetForm(); }}>Sign in</button>
               <button className={mode === "register" ? "auth-tab active" : "auth-tab"} onClick={() => { setMode("register"); resetForm(); }}>Create account</button>
             </div>
+
+            {googleOn && (
+              <div className="google-auth">
+                <div ref={googleBtnRef} className="google-btn-wrap" />
+                {googleBusy && <div className="auth-error">Signing in with Google…</div>}
+                <div className="google-divider"><span>or use email</span></div>
+              </div>
+            )}
 
             <form className="login-form" onSubmit={submit} noValidate>
               {mode === "register" && (

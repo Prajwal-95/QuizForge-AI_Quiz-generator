@@ -13,11 +13,19 @@ services:
     dockerfilePath: ./Dockerfile
     plan: free
     healthCheckPath: /api/health
+    disk:
+      name: quizforge-data
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
       - key: JWT_SECRET
         generateValue: true
       - key: DATABASE_URL
-        value: sqlite:///./quizforge.db
+        # Point SQLite at the persistent disk so accounts/quizzes survive restarts.
+        value: sqlite:////var/data/quizforge.db
+      - key: GOOGLE_CLIENT_ID
+        # For Sign in with Google (see README). Leave blank to hide the button.
+        sync: false
       - key: GROQ_API_KEY
         # REQUIRED for live AI quizzes. Without a key the app stays in Demo Mode
         # (curated local question bank) and the UI shows "Demo mode". Grab a free
@@ -48,3 +56,6 @@ services:
           name: quizforge-api
           type: web
           envVarKey: RENDER_EXTERNAL_HOSTNAME
+      - key: VITE_GOOGLE_CLIENT_ID
+        # Must equal the backend GOOGLE_CLIENT_ID. Sets the button visibility.
+        sync: false

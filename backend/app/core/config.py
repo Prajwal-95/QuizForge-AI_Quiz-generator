@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 1440  # 24 hours
 
+    # Google OAuth (Sign in with Google). Set GOOGLE_CLIENT_ID to the web-client
+    # ID from https://console.cloud.google.com/apis/credentials. If left empty,
+    # the Google button is hidden on the frontend and only email/password works.
+    google_client_id: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

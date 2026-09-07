@@ -23,7 +23,8 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120))
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
-    password_hash: Mapped[str] = mapped_column(String(255))
+    # Nullable: password accounts set a bcrypt hash; Google sign-in users have none.
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     quizzes: Mapped[list["Quiz"]] = relationship(back_populates="creator", cascade="all, delete-orphan")

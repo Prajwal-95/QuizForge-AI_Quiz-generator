@@ -182,6 +182,23 @@ export async function login(email: string, password: string) {
   });
 }
 
+export async function googleLogin(credential: string) {
+  return request<{ token: string; user: { id: number; name: string; email: string } }>("/auth/google", {
+    method: "POST",
+    body: JSON.stringify({ credential }),
+  });
+}
+
+/** True when the build was configured with a Google OAuth client ID. */
+export function isGoogleSignInEnabled(): boolean {
+  return Boolean(getGoogleClientId());
+}
+
+/** The build-time Google OAuth web client ID (empty when not configured). */
+export function getGoogleClientId(): string {
+  return (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined)?.trim() ?? "";
+}
+
 export async function listMyQuizzes(): Promise<QuizSummary[]> {
   return request<QuizSummary[]>("/quizzes", { method: "GET" }, true);
 }

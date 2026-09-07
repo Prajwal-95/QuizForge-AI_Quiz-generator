@@ -50,6 +50,10 @@ class UserLogin(BaseModel):
     password: str = Field(min_length=1, max_length=128)
 
 
+class GoogleTokenIn(BaseModel):
+    credential: str = Field(min_length=10)
+
+
 class TokenResponse(BaseModel):
     token: str
     user: dict
