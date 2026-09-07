@@ -3,6 +3,11 @@ FROM node:22-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
+# Bump this value (or change it to any new string) to force Render to rebuild
+# from scratch instead of re-serving stale cached layers. This is needed
+# because Render's registry-based Docker caching can serve old COPY layers
+# even when source files have changed.
+ARG CACHE_BUST=1
 COPY . .
 # VITE_API_BASE is injected at build time (Render auto-translates service
 # env vars into Docker build args) so the built bundle knows where the
