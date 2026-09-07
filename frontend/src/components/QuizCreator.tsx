@@ -1,17 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Check,
   Copy,
+  FileText,
+  Globe,
   Link2,
   Loader2,
   Share2,
   Sparkles,
+  Type,
+  Upload,
   X,
 } from "lucide-react";
 import { ErrorBanner } from "./shared";
 import { useToast } from "./Toast";
-import { createQuiz, generateQuizAI, publishQuiz, shareUrl } from "../api";
+import {
+  createQuiz,
+  generateQuizAI,
+  publishQuiz,
+  shareUrl,
+  uploadDocument,
+  fetchDocumentUrl,
+} from "../api";
 import type { Quiz } from "../types";
 
 type QuizCreatorProps = {
@@ -146,6 +157,21 @@ export function ShareModal({ quiz, onClose }: { quiz: Quiz; onClose: () => void 
 }
 /* ── QuizCreator (AI generation only) ─────────────────────────── */
 
+type SourceMode = "topic" | "upload" | "paste" | "url";
+
+const SOURCE_TABS: { id: SourceMode; label: string; icon: React.ReactNode; hint: string }[] = [
+  { id: "topic", label: "Topic", icon: <Type size={15} />, hint: "Type a subject and QuizForge writes the questions." },
+  { id: "upload", label: "Upload PDF", icon: <Upload size={15} />, hint: "Upload a PDF, DOCX, or TXT and QuizForge builds questions from it." },
+  { id: "paste", label: "Paste Text", icon: <FileText size={15} />, hint: "Paste your own notes or content and QuizForge turns it into questions." },
+  { id: "url", label: "From URL", icon: <Globe size={15} />, hint: "Paste a webpage link and QuizForge extracts the content for questions." },
+];
+
+const QUESTION_TYPE_OPTIONS: { id: string; label: string }[] = [
+  { id: "mcq", label: "Multiple choice" },
+  { id: "true_false", label: "True / False" },
+  { id: "short_answer", label: "Fill in the blanks" },
+];
+
 export function QuizCreator({ onDone }: QuizCreatorProps) {
   const toast = useToast();
   const [meta, setMeta] = useState({
@@ -155,31 +181,105 @@ export function QuizCreator({ onDone }: QuizCreatorProps) {
     difficulty: "medium",
     time_limit: 0,
   });
+  const [sourceMode, setSourceMode] = useState<SourceMode>("topic");
   const [aiTopic, setAiTopic] = useState("");
+  const [aiSourceText, setAiSourceText] = useState("");
+  const [aiUrl, setAiUrl] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [aiUploadOk, setAiUploadOk] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [questionTypes, setQuestionTypes] = useState<string[]>(["mcq", "true_false", "short_answer"]);
   const [aiCount, setAiCount] = useState(5);
   const [aiLoading, setAiLoading] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [sharedQuiz, setSharedQuiz] = useState<Quiz | null>(null);
 
-  async function handleGenerateAndPublish() {
-    if (!aiTopic.trim()) {
-      setError("Enter a topic to generate your quiz.");
-      toast.warning("Enter a topic to generate your quiz");
+  function toggleQuestionType(id: string) {
+    setQuestionTypes((prev) =>
+      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+    );
+  }
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setProcessing(true);
+    setError("");
+    setFileName(file.name);
+    const input = e.target;
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const text = await uploadDocument(form);
+      setAiSourceText(text);
+      setAiUploadOk(true);
+      toast.success("Document uploaded & read âœ…");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not read the file.");
+      setAiUploadOk(false);
+      toast.error(err instanceof Error ? err.message : "Could not read the file.");
+    } finally {
+      setProcessing(false);
+      if (input) input.value = "";
+    }
+  }
+
+  async function handleFetchUrl() {
+    const url = aiUrl.trim();
+    if (!url) {
+      setError("Enter a URL to pull content from.");
       return;
     }
+    setProcessing(true);
+    setError("");
+    try {
+      const res = await fetchDocumentUrl(url);
+      setAiSourceText(res.text);
+      setAiUploadOk(true);
+      toast.success("Page content fetched âœ…");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not fetch the URL.");
+      setAiUploadOk(false);
+      toast.error(err instanceof Error ? err.message : "Could not fetch the URL.");
+    } finally {
+      setProcessing(false);
+    }
+  }
+
+    async function handleGenerateAndPublish() {
+    if (questionTypes.length === 0) {
+      setError("Choose at least one question type.");
+      return;
+    }
+
+    // Validate the active source mode.
+    let topic = aiTopic.trim();
+    let sourceText = "";
+    if (sourceMode === "topic") {
+      if (!topic) {
+        setError("Enter a topic to generate your quiz.");
+        toast.warning("Enter a topic to generate your quiz");
+        return;
+      }
+    } else {
+      sourceText = aiSourceText.trim();
+      if (!topic) topic = sourceText.slice(0, 120) || "your uploaded content";
+    }
+
     setAiLoading(true);
     setError("");
     setSuccess("");
     try {
-      // 1) Generate questions with AI
+      // 1) Generate questions with AI from the topic/source
       const generated = await generateQuizAI(
-        aiTopic.trim(),
-        meta.description.trim(),
+        topic,
+        sourceText || meta.description.trim(),
         {
           count: aiCount,
           difficulty: meta.difficulty,
-          question_types: ["mcq"],
+          question_types: questionTypes,
           cognitive_level: "mixed",
           time_limit: meta.time_limit,
           shuffle_questions: false,
@@ -188,8 +288,8 @@ export function QuizCreator({ onDone }: QuizCreatorProps) {
       );
 
       // 2) Fill metadata the AI didn't provide from the form
-      const title = meta.title.trim() || generated.title || aiTopic.trim();
-      const subject = meta.subject.trim() || generated.subject || aiTopic.trim();
+      const title = meta.title.trim() || generated.title || topic;
+      const subject = meta.subject.trim() || generated.subject || topic;
 
       // 3) Save the quiz with its generated questions
       const saved = await createQuiz({
@@ -202,6 +302,7 @@ export function QuizCreator({ onDone }: QuizCreatorProps) {
           question_text: q.question_text,
           explanation: q.explanation ?? "",
           points: q.points ?? 1,
+          type: q.type ?? "mcq",
           options: q.options.map((o) => ({ option_text: o.option_text, is_correct: o.is_correct })),
         })),
       });
@@ -209,8 +310,8 @@ export function QuizCreator({ onDone }: QuizCreatorProps) {
       // 4) Publish it to get a share code
       const published = await publishQuiz(saved.id);
       setSharedQuiz(published);
-      setSuccess(`AI quiz created and published — ${published.questions?.length ?? generated.questions?.length ?? 0} questions ✓`);
-      toast.success("Quiz created & published ✨");
+      setSuccess(`AI quiz created and published - ${published.questions?.length ?? generated.questions?.length ?? 0} questions`);
+      toast.success("Quiz created & published");
     } catch (err) {
       setError(err instanceof Error ? err.message : "AI generation failed");
       toast.error(err instanceof Error ? err.message : "AI generation failed");
@@ -239,23 +340,162 @@ return (
         </motion.div>
       )}
 
-      <motion.section className="surface ai-panel ai-panel-open" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+            <motion.section className="surface ai-panel ai-panel-open" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <span className="eyebrow">AI assistant</span>
         <p className="field-hint">
-          Enter a topic and QuizForge generates a full question set for you. Your quiz is
-          created, validated, and published automatically — then you can share the link with students.
+          Choose what the quiz should be based on, then QuizForge's AI generates a full
+          question set. Your quiz is created, validated, and published automatically - then you can share the link with students.
         </p>
+
+        <div className="source-tabs" role="tablist" aria-label="Quiz source">
+          {SOURCE_TABS.map((tab) => {
+            const active = sourceMode === tab.id;
+            return (
+              <button
+                key={tab.id}
+                role="tab"
+                aria-selected={active}
+                className={`source-tab ${active ? "active" : ""}`}
+                onClick={() => { setSourceMode(tab.id); setError(""); }}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={sourceMode}
+            className="source-panel"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.18 }}
+          >
+            {sourceMode === "topic" && (
+              <label className="input-field">
+                <span className="field-label">Topic</span>
+                <input
+                  type="text"
+                  value={aiTopic}
+                  onChange={(e) => setAiTopic(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && !aiLoading && handleGenerateAndPublish()}
+                  placeholder="e.g. Database normalization"
+                />
+              </label>
+            )}
+
+            {sourceMode === "upload" && (
+              <div className="upload-zone">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.docx,.txt"
+                  style={{ display: "none" }}
+                  onChange={handleFileSelected}
+                />
+                <button
+                  type="button"
+                  className="upload-drop"
+                  disabled={processing}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload size={22} />
+                  <strong>{processing ? "Reading document..." : fileName || "Click to upload a PDF, DOCX, or TXT"}</strong>
+                  <span>QuizForge reads the file and builds questions from its content.</span>
+                </button>
+                {aiUploadOk && (
+                  <p className="source-ready"><Check size={14} /> Document read - {aiSourceText.length} characters extracted.</p>
+                )}
+                {aiSourceText && (
+                  <label className="input-field">
+                    <span className="field-label">Extracted text (edit if needed)</span>
+                    <textarea
+                      rows={4}
+                      value={aiSourceText}
+                      onChange={(e) => setAiSourceText(e.target.value)}
+                      placeholder="Extracted document text appears here..."
+                    />
+                  </label>
+                )}
+              </div>
+            )}
+
+            {sourceMode === "paste" && (
+              <label className="input-field">
+                <span className="field-label">Paste your content</span>
+                <textarea
+                  rows={8}
+                  value={aiSourceText}
+                  onChange={(e) => setAiSourceText(e.target.value)}
+                  placeholder="Paste your notes, chapters, slides, or any text and QuizForge will create questions from it..."
+                />
+              </label>
+            )}
+
+            {sourceMode === "url" && (
+              <div className="url-row">
+                <label className="input-field">
+                  <span className="field-label">Webpage URL</span>
+                  <input
+                    type="url"
+                    value={aiUrl}
+                    onChange={(e) => setAiUrl(e.target.value)}
+                    placeholder="https://example.com/article"
+                  />
+                </label>
+                <motion.button
+                  type="button"
+                  className="btn-3d btn-ghost btn-md"
+                  disabled={processing}
+                  onClick={handleFetchUrl}
+                  whileTap={{ scale: 0.96 }}
+                >
+                  {processing ? <Loader2 size={15} className="spin" /> : <Globe size={15} />}
+                  {processing ? "Fetching..." : "Fetch content"}
+                </motion.button>
+                {aiSourceText && (
+                  <label className="input-field">
+                    <span className="field-label">Fetched content (edit if needed)</span>
+                    <textarea
+                      rows={4}
+                      value={aiSourceText}
+                      onChange={(e) => setAiSourceText(e.target.value)}
+                      placeholder="Fetched page text appears here..."
+                    />
+                  </label>
+                )}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="qtype-block">
+          <span className="field-label">Question types (AI generates these)</span>
+          <div className="qtype-chips">
+            {QUESTION_TYPE_OPTIONS.map((opt) => {
+              const checked = questionTypes.includes(opt.id);
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  className={`qtype-chip ${checked ? "checked" : ""}`}
+                  onClick={() => toggleQuestionType(opt.id)}
+                  aria-pressed={checked}
+                >
+                  <span className={`qtype-check ${checked ? "shown" : ""}`}>
+                    {checked ? <Check size={13} /> : null}
+                  </span>
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="ai-controls">
-          <label className="input-field">
-            <span className="field-label">Topic</span>
-            <input
-              type="text"
-              value={aiTopic}
-              onChange={(e) => setAiTopic(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !aiLoading && handleGenerateAndPublish()}
-              placeholder="e.g. Database normalization"
-            />
-          </label>
           <label className="input-field ai-count">
             <span className="field-label">Questions</span>
             <input
@@ -268,15 +508,16 @@ return (
           </label>
           <motion.button
             className="btn-3d btn-primary"
-            disabled={aiLoading}
+            disabled={aiLoading || processing}
             onClick={handleGenerateAndPublish}
             whileTap={{ scale: 0.96 }}
           >
             {aiLoading ? <Loader2 size={15} className="spin" /> : <Sparkles size={15} />}
-            {aiLoading ? "Generating & publishing…" : "Generate & publish quiz"}
+            {aiLoading ? "Generating & publishing..." : "Generate & publish quiz"}
           </motion.button>
         </div>
       </motion.section>
+
 
       <motion.section className="surface meta-card" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <span className="eyebrow">Quiz details (optional)</span>

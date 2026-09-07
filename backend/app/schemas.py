@@ -66,6 +66,7 @@ class QuestionIn(BaseModel):
     question_text: str = Field(min_length=1)
     explanation: str = ""
     points: int = Field(default=1, ge=0, le=100)
+    type: str = Field(default="mcq")
     options: list[OptionIn] = Field(min_length=2, max_length=6)
 
 

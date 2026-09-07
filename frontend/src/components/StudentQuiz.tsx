@@ -285,7 +285,7 @@ export function StudentQuiz() {
           transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
         >
           <div className="student-q-meta">
-            <span className="chip">MCQ</span>
+            <span className="chip">{question.type === "true_false" ? "True / False" : question.type === "short_answer" ? "Fill in the blanks" : "MCQ"}</span>
             <span className="chip muted">{question.points} {question.points === 1 ? "point" : "points"}</span>
           </div>
           <h2 className="student-q-text">{question.question_text}</h2>

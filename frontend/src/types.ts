@@ -36,6 +36,7 @@ export type QuestionInput = {
   question_text: string;
   explanation: string;
   points: number;
+  type?: string;
   options: OptionInput[];
 };
 
@@ -191,6 +192,7 @@ export type StudentQuestion = {
   question_text: string;
   points: number;
   order_index: number;
+  type?: string;
   options: Array<{ id: number; option_text: string; option_index: number }>;
 };
 

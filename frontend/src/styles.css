@@ -532,6 +532,33 @@ canvas{animation:none!important}
 .ai-controls{flex-wrap:wrap;align-items:flex-end;gap:14px;margin-top:6px;display:flex}
 .ai-controls .input-field{flex:1;min-width:220px}
 .ai-controls .ai-count{flex:0 0 130px;min-width:0}
+/* ── Generator source tabs (Topic / Upload / Paste / URL) ────────── */
+.source-tabs{border-radius:var(--radius);border:1px solid var(--border);background:color-mix(in srgb, var(--surface) 60%, transparent);gap:4px;padding:4px;margin:14px 0;display:flex;flex-wrap:wrap}
+.source-tab{border-radius:calc(var(--radius) - 2px);color:var(--muted);background:transparent;cursor:pointer;align-items:center;gap:7px;padding:9px 13px;font-size:13px;font-weight:600;border:1px solid transparent;transition:color .15s,background .15s,border-color .15s;display:inline-flex}
+.source-tab:hover{color:var(--text-soft);background:var(--surface-2)}
+.source-tab.active{color:var(--brand-bright);background:color-mix(in srgb, var(--brand) 14%, var(--surface));border-color:color-mix(in srgb, var(--brand) 30%, var(--border))}
+.source-tab svg{flex-shrink:0}
+.source-panel{flex-direction:column;gap:14px;margin-bottom:4px;display:flex}
+.source-panel .input-field{width:100%}
+.source-ready{border-radius:var(--radius);border:1px solid color-mix(in srgb, var(--accent) 40%, var(--border));background:color-mix(in srgb, var(--accent) 8%, var(--surface));color:var(--text-soft);align-items:center;gap:8px;padding:10px 13px;font-size:12.5px;font-weight:600;display:flex}
+.source-ready svg{color:var(--accent);flex-shrink:0}
+.upload-drop{border-radius:var(--radius);border:1.5px dashed var(--border-strong);background:color-mix(in srgb, var(--surface) 50%, transparent);color:var(--text);cursor:pointer;text-align:left;flex-direction:column;align-items:flex-start;gap:6px;width:100%;padding:22px 20px;font-size:13.5px;transition:border-color .18s,background .18s;display:flex}
+.upload-drop:hover{border-color:var(--brand);background:color-mix(in srgb, var(--brand) 6%, var(--surface))}
+.upload-drop svg{color:var(--accent)}
+.upload-drop strong{font-size:14.5px;font-weight:700}
+.upload-drop span{color:var(--muted);font-size:12.5px}
+.upload-zone{flex-direction:column;gap:12px;display:flex}
+.url-row{flex-direction:column;gap:12px;display:flex}
+.url-row .btn-3d{align-self:flex-start}
+/* ── Question type chips (MCQ / True-False / Fill in blanks) ────── */
+.qtype-block{flex-direction:column;gap:9px;margin:12px 0 4px;display:flex}
+.qtype-chips{flex-wrap:wrap;gap:8px;display:flex}
+.qtype-chip{border-radius:99px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text-soft);cursor:pointer;align-items:center;gap:8px;padding:9px 14px;font-size:13.5px;font-weight:600;transition:border-color .15s,background .15s,color .15s;display:inline-flex}
+.qtype-chip:hover{border-color:color-mix(in srgb, var(--brand) 45%, var(--border-strong))}
+.qtype-chip.checked{border-color:var(--brand);background:color-mix(in srgb, var(--brand) 14%, var(--surface));color:var(--brand-bright)}
+.qtype-check{border:1.5px solid var(--border-strong);background:var(--surface);color:#030705;border-radius:50%;flex-shrink:0;place-items:center;width:18px;height:18px;transition:background .15s,border-color .15s;display:grid}
+.qtype-chip.checked .qtype-check{background:var(--brand);border-color:var(--brand)}
+
 .questions-section{margin-top:24px}
 .questions-head{justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;display:flex}
 .questions-head .section-title{margin-top:4px}
@@ -582,6 +609,14 @@ canvas{animation:none!important}
 .question-editor-card{padding:16px}
 .creator-footer{-webkit-backdrop-filter:none;backdrop-filter:none;position:static}
 .creator-footer-left,.creator-footer-actions{justify-content:space-between;width:100%}
+.student-option{padding:16px 15px;min-height:52px}
+.student-q-text{font-size:18px}
+.student-dot{width:13px;height:13px}
+.source-tabs{gap:4px}
+.source-tab{flex:1;justify-content:center;padding:10px 8px}
+.qtype-chip{padding:10px 13px}
+.url-row .btn-3d{align-self:stretch;justify-content:center;width:100%}
+
 }
 @media (width<=520px){.creator-heading .button{padding:9px 14px;font-size:13px}
 .ai-controls{flex-direction:column;align-items:stretch}
@@ -590,6 +625,13 @@ canvas{animation:none!important}
 .option-edit-row .icon-button.subtle{display:none}
 .share-actions .button{flex:40%}
 }
+/* Touch devices: larger tap targets, no hover-only feedback, remove slow tap highlight */
+@media (hover:none) and (pointer:coarse){
+  .student-option,.source-tab,.qtype-chip,.student-dot,.btn-3d{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .student-option:hover,.source-tab:hover{border-color:var(--border-strong);background:var(--surface)}
+  .student-shell{min-height:100dvh}
+}
+
 @media (prefers-reduced-motion:reduce){.quiz-card,.analytics-card,.research-row,.student-option,.student-dot,.correct-radio,.chart-bar-h,.chart-bar-v,.accuracy-fill,.filter-tab,.share-chip,.sort-header{transition:none!important;transform:none!important}
 }
 :root,.theme-light{--bg-noise:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/></svg>");--glass:#f0fdf49E;--glass-strong:#f0fdf4D1;--glass-border:#f0fdf4B3;--glass-blur:20px;--inset-hi:inset 0 1px 0 #f0fdf4BF;--nav-active-bg:linear-gradient(135deg, #04630729, #0D94881A);--nav-active-shadow:0 6px 16px -8px #04630799;--surface-grad:linear-gradient(180deg, #f0fdf4F5, #b7c9c0F0);--3d-deep:#050a0847;--glow-brand:0 12px 34px -10px #046307B3}

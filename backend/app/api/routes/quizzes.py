@@ -106,7 +106,7 @@ def _apply_questions(db, quiz, questions):
             explanation=qin.explanation,
             points=qin.points,
             order_index=index,
-            type="mcq",
+            type=(qin.type or "mcq").strip().lower() or "mcq",
             difficulty=quiz.difficulty,
         )
         db.add(question)
@@ -423,6 +423,7 @@ def generate_quiz(payload: GenerateQuizRequest, user: User = Depends(get_current
             question_text=item.get("question", f"Question {index + 1}"),
             explanation=item.get("explanation", ""),
             points=1,
+            type=(item.get("type") or "mcq"),
             options=[
                 {"option_text": opt, "is_correct": item.get("correct_answer") == opt}
                 for opt in (item.get("options") or [])
