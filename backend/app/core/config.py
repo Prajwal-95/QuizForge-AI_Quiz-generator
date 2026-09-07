@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     # Auth
     jwt_secret: str = "quizforge-dev-secret-change-in-production"
     jwt_algorithm: str = "HS256"
-    jwt_expire_minutes: int = 1440  # 24 hours
+    jwt_expire_minutes: int = 43200  # 30 days — teachers shouldn't be logged out constantly
 
     # Google OAuth (Sign in with Google). Set GOOGLE_CLIENT_ID to the web-client
     # ID from https://console.cloud.google.com/apis/credentials. If left empty,

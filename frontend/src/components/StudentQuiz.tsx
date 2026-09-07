@@ -14,6 +14,8 @@ import {
   User,
   Sparkles,
   ShieldCheck,
+  RefreshCw,
+  WifiOff,
 } from "lucide-react";
 import {
   fetchPublicQuiz,
@@ -52,8 +54,10 @@ export function StudentQuiz() {
   const [subError, setSubError] = useState("");
   const submitRef = useRef(false);
 
-  useEffect(() => {
+  const loadQuiz = useCallback(() => {
     if (!shareCode) return;
+    setPhase("loading");
+    setError("");
     fetchPublicQuiz(shareCode)
       .then((q) => {
         setQuiz(q);
@@ -65,6 +69,10 @@ export function StudentQuiz() {
         setPhase("error");
       });
   }, [shareCode]);
+
+  useEffect(() => {
+    loadQuiz();
+  }, [loadQuiz]);
 
   function start() {
     if (!studentName.trim()) {
@@ -144,8 +152,37 @@ export function StudentQuiz() {
     return (
       <div className="student-shell">
         <div className="student-loading">
-          <Loader2 size={22} className="spin" />
-          <p>Loading quizâ€¦</p>
+          <div className="qf-loader" role="status" aria-label="Loading quiz">
+            <div className="qf-loader-stage">
+              <motion.span
+                className="qf-loader-mark"
+                animate={{ scale: [1, 1.15, 1], rotate: [0, 8, -8, 0] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+              >
+                Q
+              </motion.span>
+              <span className="qf-loader-ring" />
+              <span className="qf-loader-ring qf-loader-ring-2" />
+            </div>
+            <div className="qf-loader-wordmark">
+              <span className="lw-quiz">Quiz</span><span className="lw-forge">forge</span>&nbsp;<span className="lw-ai">AI</span>
+            </div>
+            <motion.p
+              className="qf-loader-tag"
+              animate={{ opacity: [0.4, 1, 0.4] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+            >
+              Opening your quiz…
+            </motion.p>
+            <div className="qf-loader-bar">
+              <motion.span
+                className="qf-loader-bar-fill"
+                animate={{ x: ["-100%", "220%"] }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+              />
+            </div>
+            <p className="qf-loader-hint">Tip: mobile connections can be slow — hang tight, we're almost there.</p>
+          </div>
         </div>
       </div>
     );
@@ -153,20 +190,41 @@ export function StudentQuiz() {
 
   /* â”€â”€ Error â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   if (phase === "error") {
+    const isNetwork =
+      error.includes("too long") ||
+      error.includes("Failed to fetch") ||
+      error.includes("NetworkError") ||
+      error.includes("network");
+    const isClosed = error.includes("accepting");
+    const isNotFound = error.includes("not") || error.includes("404");
+
     return (
       <div className="student-shell">
         <div className="student-error surface">
-          <span className="eyebrow">Quiz unavailable</span>
-          <h1>{error.includes("not") ? error : "Something went wrong"}</h1>
+          <div className="student-error-icon">
+            {isNetwork ? <WifiOff size={44} strokeWidth={1.5} /> : <span className="eyebrow">Quiz unavailable</span>}
+          </div>
+          <h1>{isNotFound ? error : isNetwork ? "Can't reach the quiz server" : "Something went wrong"}</h1>
           <p>
-            {error.includes("not") || error.includes("accepting")
+            {isNotFound || isClosed
               ? error
-              : "We couldn't reach the quiz server. Check your connection and try again."}
+              : isNetwork
+                ? "The quiz server may be starting up (Render free tier can take 30-60 seconds on cold start). Check your connection and try again."
+                : "We couldn't load the quiz. Check your connection and try again."}
           </p>
-          {error.includes("accepting") && (
+          {isClosed && (
             <p className="field-hint">The quiz has been closed by the creator.</p>
           )}
-          <Link className="btn-3d btn-ghost btn-md" to="/"><Home size={15} /> Back to home</Link>
+          <div className="student-error-actions">
+            <motion.button
+              className="btn-3d btn-primary btn-md"
+              onClick={() => loadQuiz()}
+              whileTap={{ scale: 0.95 }}
+            >
+              <RefreshCw size={15} /> Try again
+            </motion.button>
+            <Link className="btn-3d btn-ghost btn-md" to="/"><Home size={15} /> Back to home</Link>
+          </div>
         </div>
       </div>
     );

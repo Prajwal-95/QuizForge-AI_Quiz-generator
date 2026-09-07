@@ -225,7 +225,7 @@ Copy `backend/.env.example` → `backend/.env`. No real secrets are committed.
 | `MAX_LLM_CONTEXT_CHARS` | `12000` | Source context cap sent to the LLM |
 | `JWT_SECRET` | dev default | **Change in production** |
 | `JWT_ALGORITHM` | `HS256` | JWT signing algorithm |
-| `JWT_EXPIRE_MINUTES` | `1440` | Token lifetime (24 h) |
+| `JWT_EXPIRE_MINUTES` | `43200` | Token lifetime (30 days) |
 
 Provider calls are isolated from Demo Mode. Large documents are bounded to `MAX_LLM_CONTEXT_CHARS` before generation to stay within Groq token limits.
 

@@ -105,7 +105,7 @@ export function clearSession() {
   localStorage.removeItem(USER_KEY);
 }
 
-async function request<T>(path: string, options: RequestInit = {}, auth = false): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}, auth = false, timeoutMs = 20000): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
@@ -114,7 +114,16 @@ async function request<T>(path: string, options: RequestInit = {}, auth = false)
     const token = getToken();
     if (token) headers.Authorization = `Bearer ${token}`;
   }
-  const response = await fetch(`${API}${path}`, { ...options, headers });
+  // AbortController gives the request a hard timeout so a slow/cold-starting
+  // backend (e.g. Render free tier) never leaves the UI spinning forever.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let response: Response;
+  try {
+    response = await fetch(`${API}${path}`, { ...options, headers, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
   if (!response.ok) {
     let message = `Request failed (${response.status})`;
     try {
@@ -255,7 +264,27 @@ export async function getMetrics(): Promise<Metrics> {
 }
 
 export async function fetchPublicQuiz(shareCode: string): Promise<StudentQuizInfo> {
-  return request<StudentQuizInfo>(`/quizzes/share/${shareCode}`, { method: "GET" });
+  // Retry a few times with a dedicated timeout. A cold-starting free-tier
+  // backend can take 30–60s to become reachable, so we retry before giving up
+  // and surfacing a friendly error to the student.
+  const attempts = 3;
+  let lastError: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await request<StudentQuizInfo>(`/quizzes/share/${shareCode}`, { method: "GET" }, false, 15000);
+    } catch (err) {
+      lastError = err;
+      const isTimeout =
+        err instanceof DOMException && err.name === "AbortError";
+      // Only retry on timeouts/network errors; surface 4xx/5xx immediately.
+      if (!isTimeout && !(err instanceof TypeError)) throw err;
+      // Small backoff between retries (0.8s, 1.6s).
+      await new Promise((r) => setTimeout(r, 800 * (i + 1)));
+    }
+  }
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("The quiz server took too long to respond. Please check your connection and try again.");
 }
 
 export async function startStudentAttempt(shareCode: string, studentName: string, studentId: string): Promise<StudentAttemptStart> {
