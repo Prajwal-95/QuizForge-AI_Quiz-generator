@@ -12,7 +12,7 @@ COPY . .
 # VITE_API_BASE is injected at build time (Render auto-translates service
 # env vars into Docker build args) so the built bundle knows where the
 # FastAPI backend lives. Defaults to "/api" for local/single-origin setups.
-ARG VITE_API_BASE=/api
+ARG VITE_API_BASE=https://quizforge-api-ntm4.onrender.com/api
 ENV VITE_API_BASE=${VITE_API_BASE}
 # Google OAuth client ID, injected at build time. Empty by default (button hidden).
 ARG VITE_GOOGLE_CLIENT_ID=
