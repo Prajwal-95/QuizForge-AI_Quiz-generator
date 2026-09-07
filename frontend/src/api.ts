@@ -30,9 +30,24 @@ function resolveApiBase(): string {
   //    "https://host/api" or just "https://host" (the /api suffix is auto-added).
   const deployBase = import.meta.env.VITE_API_BASE as string | undefined;
   if (deployBase) {
-    // Render's fromService/host gives a bare hostname (e.g. "quizforge-api.onrender.com").
-    // Prepend https:// if no protocol is present so fetch() works correctly.
     let base = deployBase.replace(/\/+$/, "");
+
+    // Render's `fromService...property: host` can hand us a TRUNCATED internal
+    // host without the domain suffix (e.g. "quizforge-api-ntm4" instead of
+    // "quizforge-api-ntm4.onrender.com"). A dot-less host is never reachable
+    // from a browser, so complete it with Render's public suffix when detected.
+    // (The render.yaml now uses RENDER_EXTERNAL_HOSTNAME, which is already the
+    // full hostname — this check just makes old/misconfigured builds work too.)
+    if (!/^https?:\/\//i.test(base) && !base.startsWith("/") && !base.includes(".")) {
+      base += ".onrender.com";
+    }
+
+    // Relative path (e.g. "/api") means same-origin proxying — keep as-is so
+    // fetch() resolves it against the page's own origin (no "https:///api").
+    if (base.startsWith("/")) {
+      return base.endsWith("/api") ? base : `${base}/api`;
+    }
+
     if (!/^https?:\/\//i.test(base)) {
       base = `https://${base}`;
     }

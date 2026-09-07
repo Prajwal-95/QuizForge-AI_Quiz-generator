@@ -36,8 +36,15 @@ services:
       # Injected at Docker build time via ARG in the Dockerfile.
       # Render resolves this from the backend service's public hostname,
       # then api.ts auto-adds /api at runtime.
+      #
+      # Use RENDER_EXTERNAL_HOSTNAME (not `property: host`): Render's `host`
+      # property returns the TRUNCATED internal host (e.g. "quizforge-api-ntm4"
+      # WITHOUT ".onrender.com"), which produces a bundle that calls
+      # "https://quizforge-api-ntm4/api" → DNS fails → permanent "Offline" badge.
+      # RENDER_EXTERNAL_HOSTNAME is the full public hostname
+      # (e.g. "quizforge-api-ntm4.onrender.com").
       - key: VITE_API_BASE
         fromService:
           name: quizforge-api
           type: web
-          property: host
+          envVarKey: RENDER_EXTERNAL_HOSTNAME
