@@ -3,6 +3,15 @@
 #   1. Push this repo to GitHub
 #   2. Render -> New -> Blueprint -> connect the repo -> Apply
 # Free tier works for both services.
+#
+# ⚠️  FREE-TIER LIMITATION: Render free tier does NOT support persistent disks.
+# On free tier the SQLite DB lives in the container's ephemeral filesystem and
+# is WIPED on every cold start / redeploy.  Accounts and quizzes will not
+# survive restarts.
+#
+# To keep data across restarts you MUST upgrade to a paid plan and enable the
+# disk block below (uncomment the `disk:` section and change DATABASE_URL back
+# to  sqlite:////var/data/quizforge.db).  See DEPLOY.md for full instructions.
 
 services:
   # ── Backend: FastAPI (Python, Docker) ────────────────────────
@@ -13,16 +22,21 @@ services:
     dockerfilePath: ./Dockerfile
     plan: free
     healthCheckPath: /api/health
-    disk:
-      name: quizforge-data
-      mountPath: /var/data
-      sizeGB: 1
+    # ── Persistent disk (paid plan only) ─────────────────────────
+    # Uncomment the block below after upgrading to a paid Render plan.
+    # On free tier, omitting this lets the Blueprint sync succeed.
+    #
+    # disk:
+    #   name: quizforge-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
     envVars:
       - key: JWT_SECRET
         generateValue: true
       - key: DATABASE_URL
-        # Point SQLite at the persistent disk so accounts/quizzes survive restarts.
-        value: sqlite:////var/data/quizforge.db
+        # Free tier: store in working directory (ephemeral — data lost on restart).
+        # Paid plan with disk: change to  sqlite:////var/data/quizforge.db
+        value: sqlite:///./quizforge.db
       - key: GOOGLE_CLIENT_ID
         # For Sign in with Google (see README). Leave blank to hide the button.
         sync: false
