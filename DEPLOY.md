@@ -8,9 +8,15 @@ Already handled for you:
 
 - `render.yaml` at the repo root defines both services (FastAPI + Vite static).
 - `frontend/src/api.ts` auto-adds `/api` to `VITE_API_BASE` and keeps local dev
-  (`localhost:5173 → :8001`) unchanged.
+  (`localhost:5173 → :8001`) unchanged. On the deployed site it resolves the API
+  to the **same origin** (`https://quizforge.onrender.com/api`).
+- `frontend/nginx.conf` **proxies all `/api/` requests to the backend service**
+  (via the runtime `API_BACKEND` env var, injected by `render.yaml` from the
+  backend's hostname). This is what lets the bundled SPA reach FastAPI regardless
+  of whether `VITE_API_BASE` was baked at build time — and it works on ANY device
+  (desktop, phone, tablet) because everything stays same-origin (no CORS).
 - `backend/Dockerfile` respects the `PORT` env var that Render injects.
-- CORS is already wide open (`allow_origins=["*"]`).
+- CORS is already wide open (`allow_origins=["*"]`) as a secondary path.
 
 ---
 
@@ -171,8 +177,10 @@ Render injects `PORT` automatically; the Dockerfile picks it up.
 7. Click **Create Static Site**. It builds and serves your app over HTTPS.
 
 > **Note:** the `frontend/Dockerfile` (used by `render.yaml`) already wires
-> `VITE_API_BASE` automatically from the backend service — this manual step only
-> applies if you deploy the frontend as a plain Static Site instead.
+> `VITE_API_BASE` automatically from the backend service, and its nginx proxies
+> `/api/` → the backend. This manual `VITE_API_BASE` step only applies if you
+> instead deploy the frontend as a plain Static Site (which can't run the nginx
+> proxy, so it must call the backend directly cross-origin — CORS is open).
 
 ### 5. Done 🎉
 

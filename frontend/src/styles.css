@@ -1106,12 +1106,27 @@ to{box-shadow:0 0 0 14px #0F766E00}
 .modal-panel{padding:20px}
 .student-nav{flex-direction:column}
 .student-dots{order:-1}
+.student-shell{min-height:100dvh;padding:18px 14px 36px;gap:14px}
+.student-landing-head h1{font-size:24px}
+.student-q-text{font-size:18px;line-height:1.45}
+.student-error{padding:22px 18px}
+.student-loading{padding:56px 0}
+.qf-loader{padding:40px 12px;gap:16px}
 }
 @media (width<=480px){.metrics-grid{grid-template-columns:1fr}
 .student-taking-meta{flex-wrap:wrap}
 .quiz-card-grid{grid-template-columns:1fr}
 .topbar{padding:12px 14px}
 .table-card th,.table-card td{padding:10px 12px}
+.student-shell{max-width:100%}
+.student-landing-head h1{font-size:22px}
+.student-q-text{font-size:17px}
+.student-option{padding:13px 14px;gap:10px;font-size:14px}
+.option-letter{width:24px;height:24px;font-size:11px}
+.student-result-score{flex-wrap:wrap}
+.student-result-grid{grid-template-columns:1fr;gap:8px}
+.student-progress-label{font-size:11.5px}
+.qf-loader-wordmark{font-size:19px}
 }
 @media (prefers-reduced-motion:reduce){*,:before,:after{scroll-behavior:auto!important;transition-duration:.001ms!important;animation-duration:.001ms!important;animation-iteration-count:1!important}
 body:before{animation:none!important}

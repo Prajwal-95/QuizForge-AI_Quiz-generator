@@ -52,12 +52,18 @@ export function StudentQuiz() {
   const [remaining, setRemaining] = useState(0);
   const [result, setResult] = useState<StudentSubmissionResult | null>(null);
   const [subError, setSubError] = useState("");
+  const [loadElapsed, setLoadElapsed] = useState(0);
   const submitRef = useRef(false);
 
   const loadQuiz = useCallback(() => {
-    if (!shareCode) return;
+    if (!shareCode) {
+      setError("No quiz code found in the URL.");
+      setPhase("error");
+      return;
+    }
     setPhase("loading");
     setError("");
+    setLoadElapsed(0);
     fetchPublicQuiz(shareCode)
       .then((q) => {
         setQuiz(q);
@@ -73,6 +79,14 @@ export function StudentQuiz() {
   useEffect(() => {
     loadQuiz();
   }, [loadQuiz]);
+
+  // Tick a visible timer while the quiz is loading so students see progress.
+  useEffect(() => {
+    if (phase !== "loading") return;
+    setLoadElapsed(0);
+    const id = setInterval(() => setLoadElapsed((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, [phase]);
 
   function start() {
     if (!studentName.trim()) {
@@ -172,7 +186,13 @@ export function StudentQuiz() {
               animate={{ opacity: [0.4, 1, 0.4] }}
               transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
             >
-              Opening your quiz…
+              {loadElapsed < 5
+                ? "Opening your quiz\u2026"
+                : loadElapsed < 15
+                  ? "Server is waking up\u2026"
+                  : loadElapsed < 30
+                    ? "Almost there\u2026 (cold start)"
+                    : "Still connecting\u2026 hang tight"}
             </motion.p>
             <div className="qf-loader-bar">
               <motion.span
@@ -181,7 +201,11 @@ export function StudentQuiz() {
                 transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
               />
             </div>
-            <p className="qf-loader-hint">Tip: mobile connections can be slow — hang tight, we're almost there.</p>
+            <p className="qf-loader-hint">
+              {loadElapsed > 5
+                ? `${loadElapsed}s elapsed \u2014 free servers need a moment to wake up`
+                : "Tip: free servers may take 30\u201360 s on first load"}
+            </p>
           </div>
         </div>
       </div>

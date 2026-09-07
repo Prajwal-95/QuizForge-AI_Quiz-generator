@@ -60,19 +60,23 @@ function resolveApiBase(): string {
       : "localhost";
 
   // 2) Same-origin: the backend (FastAPI at :8001) or a single-service
-  //    deploy that serves both SPA and API from one origin.
+  //    deploy that serves both SPA and API from one origin. In production,
+  //    nginx proxies /api/ → the backend service, so hitting window.origin
+  //    works for the deployed app on ANY device (desktop, phone, tablet).
   if (typeof window !== "undefined") {
     const port = window.location.port;
     // Local dev server on 5173 should NOT use the same origin — the API
     // lives on a separate port (8001) during development.
     if (port !== "5173") {
-      const host = window.location.host;
-      const proto = window.location.protocol; // preserves http/https
-      return `${proto}//${host}/api`;
+      const origin = window.location.origin;
+      return `${origin}/api`;
     }
   }
 
-  // 3) Classic local-dev / LAN fallback.
+  // 3) Local dev (Vite :5173) / LAN access.  hostname is the address the
+  //    phone/desktop used to reach the machine (e.g. 192.168.1.5 for a
+  //    phone on the same Wi-Fi).  We resolve the backend on that same host
+  //    so a phone hitting the dev server can reach the API too.
   const host = hostname === "::1" || hostname === "[::1]" ? "localhost" : hostname;
   return `http://${host}:${API_PORT}/api`;
 }
@@ -264,22 +268,24 @@ export async function getMetrics(): Promise<Metrics> {
 }
 
 export async function fetchPublicQuiz(shareCode: string): Promise<StudentQuizInfo> {
-  // Retry a few times with a dedicated timeout. A cold-starting free-tier
-  // backend can take 30–60s to become reachable, so we retry before giving up
-  // and surfacing a friendly error to the student.
-  const attempts = 3;
+  // Retry several times with generous timeouts.  A cold-starting free-tier
+  // backend can take 30–60 s to become reachable; mobile connections add
+  // latency on top.  We bump to 5 attempts × 20 s = ~100 s total so the
+  // student sees progress rather than a premature error.
+  const attempts = 5;
+  const perAttemptTimeout = 20_000; // 20 s each
   let lastError: unknown;
   for (let i = 0; i < attempts; i++) {
     try {
-      return await request<StudentQuizInfo>(`/quizzes/share/${shareCode}`, { method: "GET" }, false, 15000);
+      return await request<StudentQuizInfo>(`/quizzes/share/${shareCode}`, { method: "GET" }, false, perAttemptTimeout);
     } catch (err) {
       lastError = err;
       const isTimeout =
         err instanceof DOMException && err.name === "AbortError";
-      // Only retry on timeouts/network errors; surface 4xx/5xx immediately.
+      // Only retry on timeouts / network errors; surface 4xx/5xx immediately.
       if (!isTimeout && !(err instanceof TypeError)) throw err;
-      // Small backoff between retries (0.8s, 1.6s).
-      await new Promise((r) => setTimeout(r, 800 * (i + 1)));
+      // Exponential back-off: 1 s, 2 s, 3 s …
+      await new Promise((r) => setTimeout(r, 1000 * (i + 1)));
     }
   }
   throw lastError instanceof Error

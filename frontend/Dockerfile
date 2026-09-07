@@ -23,11 +23,13 @@ RUN npm run build
 FROM nginx:1.27-alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 # Custom config handles client-side routing (BrowserRouter) + API proxy.
-# Use envsubst so the ${PORT} variable in nginx.conf is resolved at runtime.
+# Use envsubst so the ${PORT} and ${API_BACKEND} variables in nginx.conf
+# are resolved at container start (runtime).
 RUN apk add --no-cache gettext
 COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 # Render routes to the PORT env var (default 10000). EXPOSE is informational.
 # Default PORT to 10000 at startup so envsubst never emits an empty "listen"
 # line (which would crash nginx) if the env var is missing for any reason.
+# API_BACKEND is set at runtime from the backend's RENDER_EXTERNAL_HOSTNAME.
 EXPOSE 10000
-CMD ["/bin/sh", "-c", "export PORT=${PORT:-10000}; envsubst '${PORT}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "export PORT=${PORT:-10000}; export API_BACKEND=${API_BACKEND:-localhost}; envsubst '${PORT} ${API_BACKEND}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]

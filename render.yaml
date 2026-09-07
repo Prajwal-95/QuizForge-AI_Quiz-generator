@@ -70,6 +70,14 @@ services:
           name: quizforge-api
           type: web
           envVarKey: RENDER_EXTERNAL_HOSTNAME
+      # Runtime-only: used by nginx.conf (via envsubst) to proxy /api/ to the
+      # backend.  This is the PRIMARY way the frontend reaches the API — even
+      # if VITE_API_BASE wasn't baked into the bundle at build time.
+      - key: API_BACKEND
+        fromService:
+          name: quizforge-api
+          type: web
+          envVarKey: RENDER_EXTERNAL_HOSTNAME
       - key: VITE_GOOGLE_CLIENT_ID
         # Must equal the backend GOOGLE_CLIENT_ID. Sets the button visibility.
         sync: false
